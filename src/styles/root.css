@@ -4,4 +4,5 @@
   --main-bgc: #e7f9fb;
   --main-bg-grey: rgba(132, 133, 141, 0.18);
   --color-grey: #687076;
+  --transition-bg: background-color 0.3s ease;
 }
