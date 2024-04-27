@@ -1,0 +1,7 @@
+:root {
+  --shadow-custom: 0 4px 6px -1px rgb(0 0 0 / 0.09), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --main-color: #319795;
+  --main-bgc: #e7f9fb;
+  --main-bg-grey: rgba(132, 133, 141, 0.18);
+  --color-grey: #687076;
+}
