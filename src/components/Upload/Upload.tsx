@@ -1,14 +1,15 @@
 import globalConfig from '@/constants/config';
 import React, { ReactNode, useState, useRef, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { FileStatus } from './types';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface UploadProps {
+  fileList: CustomFile[];
   children?: ReactNode;
   multiple?: boolean;
   accept?: string[];
   uploadTrigger?: 'custom' | 'auto';
   url?: string;
-  fileList?: CustomFile[];
   onChange?: (fileList: CustomFile[]) => void;
 }
 
@@ -17,6 +18,7 @@ export interface CustomFile {
   id: string;
   progress: number;
   status: FileStatus;
+  res?: any;
 }
 
 const Upload = forwardRef((props: UploadProps, ref) => {
@@ -26,14 +28,18 @@ const Upload = forwardRef((props: UploadProps, ref) => {
     accept,
     uploadTrigger = 'auto',
     url = '/api/util/upload',
-    fileList: propsFileList,
+    fileList,
     onChange,
   } = props;
-  const [fileList, setFileList] = useState<CustomFile[]>(propsFileList || []);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadFileAsStream = useCallback(
-    (paramFile: CustomFile, progressCallback?: (progress: number) => void) => {
+    (
+      paramFile: CustomFile,
+      progressCallback?: (progress: number) => void,
+      resCallback?: (res: { status: FileStatus; res?: any }) => void,
+    ) => {
       const file = paramFile.file;
       const encodedName = encodeURIComponent(file.name);
       const fileContent = {
@@ -55,9 +61,12 @@ const Upload = forwardRef((props: UploadProps, ref) => {
 
         xhr.onreadystatechange = () => {
           if (xhr.readyState === XMLHttpRequest.DONE) {
+            const res = JSON.parse(xhr.responseText);
             if (xhr.status === 200) {
-              resolve(JSON.parse(xhr.responseText));
+              resCallback?.({ status: FileStatus.success, res });
+              resolve(res);
             } else {
+              resCallback?.({ status: FileStatus.error, res });
               reject(xhr.statusText);
             }
           }
@@ -66,6 +75,7 @@ const Upload = forwardRef((props: UploadProps, ref) => {
         xhr.setRequestHeader('Content-Type', file.type);
         xhr.setRequestHeader('file-content', JSON.stringify(fileContent));
         xhr.send(file);
+        resCallback?.({ status: FileStatus.uploading });
       });
     },
     [url],
@@ -76,45 +86,73 @@ const Upload = forwardRef((props: UploadProps, ref) => {
     const fileArray = Array.from<File>(files).map(item => {
       return {
         file: item,
-        id: item.name,
+        id: uuidv4(),
         progress: 0,
         status: FileStatus.ready,
       };
     });
 
+    const newFileList = fileList?.length !== 0 ? fileList.concat(fileArray) : fileArray;
+
+    onChange?.(newFileList);
+
     if (uploadTrigger === 'auto') {
-      onFileUpload(fileArray);
+      onFileUpload(newFileList);
     }
-    setFileList(fileArray);
   };
 
   const onFileUpload = async (files?: CustomFile[]) => {
     const uploadFiles = files || fileList;
-    const uploadResult = await Promise.all(
-      uploadFiles.map(item =>
-        uploadFileAsStream(item, progress => {
-          console.log(progress, 'progress');
-        }),
+
+    const filePromise = uploadFiles.map(item =>
+      uploadFileAsStream(
+        item,
+        progress => {
+          // 更新进度
+          onChange?.((fileList =>
+            fileList.map(fileItem => {
+              if (fileItem.id === item.id) {
+                return {
+                  ...fileItem,
+                  progress,
+                };
+              } else {
+                return fileItem;
+              }
+            })) as any);
+        },
+        res => {
+          onChange?.((fileList =>
+            fileList.map(fileItem => {
+              if (fileItem.id === item.id) {
+                return {
+                  ...fileItem,
+                  status: res.status,
+                  res: res.res,
+                };
+              } else {
+                return fileItem;
+              }
+            })) as any);
+        },
       ),
     );
-    console.log(uploadResult, 'resulttt');
+    Promise.all(filePromise);
   };
 
   const onSelectFile = (e: any) => {
-    fileInputRef.current?.click();
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current?.click();
+    }
     e.stopPropagation();
   };
 
   useImperativeHandle(ref, () => {
     return {
       upload: onFileUpload,
-      fileList,
     };
   });
-
-  useEffect(() => {
-    onChange?.(fileList);
-  }, [fileList, onChange]);
 
   return (
     <div>

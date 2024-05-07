@@ -9,6 +9,7 @@ specifiers:
   '@types/node': ^20.12.7
   '@types/react': ^18.2.66
   '@types/react-dom': ^18.2.22
+  '@types/uuid': ^9.0.8
   '@typescript-eslint/eslint-plugin': ^7.2.0
   '@typescript-eslint/parser': ^7.2.0
   '@vitejs/plugin-react': ^4.2.1
@@ -40,6 +41,7 @@ devDependencies:
   '@types/node': 20.12.7
   '@types/react': 18.2.79
   '@types/react-dom': 18.2.25
+  '@types/uuid': registry.npmmirror.com/@types/uuid/9.0.8
   '@typescript-eslint/eslint-plugin': 7.7.1_ceb6c5407f364287e2f2f6d449f02e70
   '@typescript-eslint/parser': 7.7.1_eslint@8.57.0+typescript@5.4.5
   '@vitejs/plugin-react': 4.2.1_vite@5.2.10
@@ -3715,6 +3717,12 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  registry.npmmirror.com/@types/uuid/9.0.8:
+    resolution: {integrity: sha512-jg+97EGIcY9AGHJJRaaPVgetKDsrTgbRjQ5Msgjh/DQKEFl0DtyRr/VCOyD1T2R1MNeWPK/u7JoGhlDZnKBAfA==, registry: http://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@types/uuid/-/uuid-9.0.8.tgz}
+    name: '@types/uuid'
+    version: 9.0.8
+    dev: true
 
   registry.npmmirror.com/fsevents/2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==, registry: http://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/fsevents/-/fsevents-2.3.3.tgz}

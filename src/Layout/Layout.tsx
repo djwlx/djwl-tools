@@ -20,7 +20,7 @@ const LayoutComponent: FC = () => {
   useEffect(() => {
     const setPosition = () => {
       const windowWidth = window.innerWidth;
-      if (windowWidth < 640) {
+      if (windowWidth < 720) {
         setMenuPosition('top');
       } else {
         setMenuPosition('left');
@@ -34,7 +34,7 @@ const LayoutComponent: FC = () => {
   }, []);
 
   return (
-    <Box w="100vw" h="100vh">
+    <Box w="100vw" h="100vh" minWidth={'370px'}>
       <Box
         h="60px"
         w="100vw"
@@ -43,6 +43,7 @@ const LayoutComponent: FC = () => {
         display={'flex'}
         alignItems={'center'}
         gap={'16px'}
+        minWidth={'370px'}
       >
         {menuPositon === 'top' && (
           <IconButton
