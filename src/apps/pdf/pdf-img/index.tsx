@@ -21,6 +21,7 @@ import { CheckCircleIcon, CloseIcon, DownloadIcon } from '@chakra-ui/icons';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { TextScroll, TextWithTooltip } from '@/components/TextComponents';
 import globalConfig from '@/constants/config';
+import { clickDownload } from '@/utils/file';
 
 const PdfToImg: FC = () => {
   const [fileList, setFileList] = useState<CustomFile[]>([]);
@@ -34,9 +35,8 @@ const PdfToImg: FC = () => {
   const downloadZip = (fileItem: CustomFile) => {
     const url = fileItem.res?.data?.url;
     if (url) {
-      window.open(`${globalConfig.serverHost}${url}`);
+      clickDownload(url);
     }
-    console.log(fileItem);
   };
 
   const getStatus = (fileItem: CustomFile) => {
@@ -74,7 +74,7 @@ const PdfToImg: FC = () => {
         <AlertIcon />
         转化时间较长，请耐心等待！
       </Alert>
-      <Upload accept={['.pdf']} multiple fileList={fileList} onChange={setFileList}>
+      <Upload accept={['.pdf']} multiple fileList={fileList} onChange={setFileList} url="/api/util/pdf-to-img">
         <Button colorScheme="teal">点击选择pdf文件</Button>
       </Upload>
       <List border={'var(--border-main)'} padding={'16px'} marginTop={'16px'} ref={parent}>
