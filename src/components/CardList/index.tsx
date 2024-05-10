@@ -17,7 +17,7 @@ const CardList = (props: CardListProps) => {
 
   return (
     <Box borderRadius={'4px'} height={'400px'}>
-      <List>
+      <List display={'flex'} gap={'16px'}>
         {configList.map(item => {
           return (
             <ListItem key={item.link}>

@@ -1,5 +1,5 @@
 import { CustomFile, Upload } from '@/components/Upload';
-import React, { FC, useState } from 'react';
+import React, { FC, useRef, useState } from 'react';
 import {
   Alert,
   AlertIcon,
@@ -8,14 +8,23 @@ import {
   CloseButton,
   Flex,
   IconButton,
+  Input,
   List,
   ListIcon,
   ListItem,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
   Progress,
   Spacer,
   Tag,
   Text,
   Tooltip,
+  useDisclosure,
 } from '@chakra-ui/react';
 import { CheckCircleIcon, CloseIcon, DownloadIcon } from '@chakra-ui/icons';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
@@ -23,9 +32,12 @@ import { TextScroll, TextWithTooltip } from '@/components/TextComponents';
 import globalConfig from '@/constants/config';
 import { clickDownload } from '@/utils/file';
 
-const PdfToImg: FC = () => {
+const UnlockPdf: FC = () => {
   const [fileList, setFileList] = useState<CustomFile[]>([]);
   const [parent] = useAutoAnimate(/* optional config */);
+  const uploadRef = useRef();
+  const inputRef = useRef(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const deleteItemFile = (fileItem: CustomFile) => {
     const { id } = fileItem;
@@ -40,6 +52,13 @@ const PdfToImg: FC = () => {
   };
 
   const getStatus = (fileItem: CustomFile) => {
+    if (fileItem.progress === 0) {
+      return {
+        text: '等待中',
+        color: 'blue',
+      };
+    }
+
     if (fileItem.progress < 100) {
       return {
         text: '上传中',
@@ -68,13 +87,38 @@ const PdfToImg: FC = () => {
     }
   };
 
+  const onConfirm = () => {
+    const value = inputRef.current?.value;
+    const nextList = fileList.map(item => {
+      return {
+        ...item,
+        password: value,
+      };
+    });
+    uploadRef.current?.upload(nextList);
+    onClose();
+    // if (inputRef.current) {
+    //   inputRef.current.value = '';
+    // }
+  };
+
   return (
     <div>
       <Alert status="warning" marginBottom={'16px'}>
         <AlertIcon />
         转化时间较长，请耐心等待！
       </Alert>
-      <Upload accept={['.pdf']} multiple fileList={fileList} onChange={setFileList} url="/api/util/pdf-to-img">
+      <Upload
+        ref={uploadRef}
+        uploadTrigger="custom"
+        accept={['.pdf']}
+        fileList={fileList}
+        onChange={files => {
+          setFileList(files);
+        }}
+        onFileChange={onOpen}
+        url="/api/util/pdf-unlock"
+      >
         <Button colorScheme="teal">点击选择pdf文件</Button>
       </Upload>
       <List border={'var(--border-main)'} padding={'16px'} marginTop={'16px'} ref={parent}>
@@ -132,7 +176,23 @@ const PdfToImg: FC = () => {
           );
         })}
       </List>
+
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>请输出密码</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Input ref={inputRef} />
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="blue" mr={3} onClick={onConfirm}>
+              确认
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 };
-export default PdfToImg;
+export default UnlockPdf;

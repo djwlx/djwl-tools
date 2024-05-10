@@ -1,5 +1,5 @@
 import globalConfig from '@/constants/config';
-import React, { ReactNode, useState, useRef, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
+import React, { ReactNode, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { FileStatus } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -11,6 +11,7 @@ export interface UploadProps {
   uploadTrigger?: 'custom' | 'auto';
   url?: string;
   onChange?: (fileList: CustomFile[]) => void;
+  onFileChange?: (fileList: CustomFile[]) => void;
 }
 
 export interface CustomFile {
@@ -19,6 +20,7 @@ export interface CustomFile {
   progress: number;
   status: FileStatus;
   res?: any;
+  password?: string;
 }
 
 const Upload = forwardRef((props: UploadProps, ref) => {
@@ -30,6 +32,7 @@ const Upload = forwardRef((props: UploadProps, ref) => {
     url = '/api/util/upload',
     fileList,
     onChange,
+    onFileChange: onPropsFileChange,
   } = props;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -46,6 +49,7 @@ const Upload = forwardRef((props: UploadProps, ref) => {
         name: encodedName,
         type: file.type,
         size: file.size,
+        password: paramFile.password,
       };
 
       return new Promise((resolve, reject) => {
@@ -92,9 +96,10 @@ const Upload = forwardRef((props: UploadProps, ref) => {
       };
     });
 
-    const newFileList = fileList?.length !== 0 ? fileList.concat(fileArray) : fileArray;
+    const newFileList = multiple ? (fileList?.length !== 0 ? fileList.concat(fileArray) : fileArray) : fileArray;
 
     onChange?.(newFileList);
+    onPropsFileChange?.(newFileList);
 
     if (uploadTrigger === 'auto') {
       onFileUpload(newFileList);

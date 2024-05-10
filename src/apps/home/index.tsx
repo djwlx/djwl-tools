@@ -1,13 +1,19 @@
 import CardList, { CardConfig } from '@/components/CardList';
 import { Box } from '@chakra-ui/react';
-import svgPath from '@/assets/pdf.svg';
+import pdfSvg from '@/assets/pdf.svg';
+import lockSvg from '@/assets/lock.svg';
 
 const Home = () => {
   const moduleList: CardConfig[] = [
     {
       name: 'PDF转图片',
       link: '/pdf-to-img',
-      imgUrl: svgPath,
+      imgUrl: pdfSvg,
+    },
+    {
+      name: 'PDF解除密码',
+      link: '/pdf-unlock',
+      imgUrl: lockSvg,
     },
   ];
 
