@@ -35,8 +35,8 @@ import { clickDownload } from '@/utils/file';
 const UnlockPdf: FC = () => {
   const [fileList, setFileList] = useState<CustomFile[]>([]);
   const [parent] = useAutoAnimate(/* optional config */);
-  const uploadRef = useRef();
-  const inputRef = useRef(null);
+  const uploadRef = useRef<any>();
+  const inputRef = useRef<any>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const deleteItemFile = (fileItem: CustomFile) => {

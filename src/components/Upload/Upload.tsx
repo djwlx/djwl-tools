@@ -114,8 +114,8 @@ const Upload = forwardRef((props: UploadProps, ref) => {
         item,
         progress => {
           // 更新进度
-          onChange?.((fileList =>
-            fileList.map(fileItem => {
+          onChange?.(((fileList: any) =>
+            fileList.map((fileItem: any) => {
               if (fileItem.id === item.id) {
                 return {
                   ...fileItem,
@@ -127,8 +127,8 @@ const Upload = forwardRef((props: UploadProps, ref) => {
             })) as any);
         },
         res => {
-          onChange?.((fileList =>
-            fileList.map(fileItem => {
+          onChange?.(((fileList: any) =>
+            fileList.map((fileItem: any) => {
               if (fileItem.id === item.id) {
                 return {
                   ...fileItem,
