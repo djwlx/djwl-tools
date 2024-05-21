@@ -54,7 +54,7 @@ const LayoutComponent: FC = () => {
           />
         )}
         <Text fontWeight={600} fontSize={18}>
-          低级亡灵工具箱
+          工具箱
         </Text>
       </Box>
       <Box h="calc(100vh - 60px)" display="flex">

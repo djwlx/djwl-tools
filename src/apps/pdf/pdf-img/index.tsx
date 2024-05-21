@@ -74,7 +74,7 @@ const PdfToImg: FC = () => {
         <AlertIcon />
         转化时间较长，请耐心等待！
       </Alert>
-      <Upload accept={['.pdf']} multiple fileList={fileList} onChange={setFileList} url="/api/util/pdf-to-img">
+      <Upload>
         <Button colorScheme="teal">点击选择pdf文件</Button>
       </Upload>
       <List border={'var(--border-main)'} padding={'16px'} marginTop={'16px'} ref={parent}>

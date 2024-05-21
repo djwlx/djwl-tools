@@ -1,175 +1,101 @@
-import globalConfig from '@/constants/config';
-import React, { ReactNode, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
-import { FileStatus } from './types';
+import { useRef, forwardRef, ChangeEvent, useImperativeHandle } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-
-export interface UploadProps {
-  fileList: CustomFile[];
-  children?: ReactNode;
-  multiple?: boolean;
-  accept?: string[];
-  uploadTrigger?: 'custom' | 'auto';
-  url?: string;
-  onChange?: (fileList: CustomFile[]) => void;
-  onFileChange?: (fileList: CustomFile[]) => void;
-}
-
-export interface CustomFile {
-  file: File;
-  id: string;
-  progress: number;
-  status: FileStatus;
-  res?: any;
-  password?: string;
-}
+import { UploadFile, UploadProps, RequestOption } from './interface';
+import uploadRequest from './request';
+import globalConfig from '@/constants/config';
 
 const Upload = forwardRef((props: UploadProps, ref) => {
   const {
     children,
     multiple = false,
     accept,
-    uploadTrigger = 'auto',
-    url = '/api/util/upload',
-    fileList,
-    onChange,
-    onFileChange: onPropsFileChange,
+    action = '/api/file/upload',
+    style,
+    className,
+    beforeUpload,
+    fileName,
+    onError,
+    onProgress,
+    onSuccess,
   } = props;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadFileAsStream = useCallback(
-    (
-      paramFile: CustomFile,
-      progressCallback?: (progress: number) => void,
-      resCallback?: (res: { status: FileStatus; res?: any }) => void,
-    ) => {
-      const file = paramFile.file;
-      const encodedName = encodeURIComponent(file.name);
-      const fileContent = {
-        name: encodedName,
-        type: file.type,
-        size: file.size,
-        password: paramFile.password,
-      };
-
-      return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        const uploadUrl = `${globalConfig.serverHost}${url}`;
-
-        xhr.upload.addEventListener('progress', event => {
-          if (event.lengthComputable) {
-            const progress = Math.round((event.loaded / event.total) * 100);
-            progressCallback?.(progress);
-          }
-        });
-
-        xhr.onreadystatechange = () => {
-          if (xhr.readyState === XMLHttpRequest.DONE) {
-            const res = JSON.parse(xhr.responseText);
-            if (xhr.status === 200) {
-              resCallback?.({ status: FileStatus.success, res });
-              resolve(res);
-            } else {
-              resCallback?.({ status: FileStatus.error, res });
-              reject(xhr.statusText);
-            }
-          }
-        };
-        xhr.open('POST', uploadUrl);
-        xhr.setRequestHeader('Content-Type', file.type);
-        xhr.setRequestHeader('file-content', JSON.stringify(fileContent));
-        xhr.send(file);
-        resCallback?.({ status: FileStatus.uploading });
-      });
-    },
-    [url],
-  );
-
-  const onFileChange = (e: any) => {
-    const files = e.target.files;
-    const fileArray = Array.from<File>(files).map(item => {
-      return {
-        file: item,
-        id: uuidv4(),
-        progress: 0,
-        status: FileStatus.ready,
-      };
-    });
-
-    const newFileList = multiple ? (fileList?.length !== 0 ? fileList.concat(fileArray) : fileArray) : fileArray;
-
-    onChange?.(newFileList);
-    onPropsFileChange?.(newFileList);
-
-    if (uploadTrigger === 'auto') {
-      onFileUpload(newFileList);
-    }
-  };
-
-  const onFileUpload = async (files?: CustomFile[]) => {
-    const uploadFiles = files || fileList;
-
-    const filePromise = uploadFiles.map(item =>
-      uploadFileAsStream(
-        item,
-        progress => {
-          // 更新进度
-          onChange?.(((fileList: any) =>
-            fileList.map((fileItem: any) => {
-              if (fileItem.id === item.id) {
-                return {
-                  ...fileItem,
-                  progress,
-                };
-              } else {
-                return fileItem;
-              }
-            })) as any);
-        },
-        res => {
-          onChange?.(((fileList: any) =>
-            fileList.map((fileItem: any) => {
-              if (fileItem.id === item.id) {
-                return {
-                  ...fileItem,
-                  status: res.status,
-                  res: res.res,
-                };
-              } else {
-                return fileItem;
-              }
-            })) as any);
-        },
-      ),
-    );
-    Promise.all(filePromise);
-  };
-
-  const onSelectFile = (e: any) => {
+  const onClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
       fileInputRef.current?.click();
     }
-    e.stopPropagation();
+  };
+
+  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { files } = e.target;
+    const fileList = Array.from(files as FileList);
+    uploadFiles(fileList);
+  };
+
+  const uploadFiles = (files: File[]) => {
+    const originFiles = [...files];
+    const postFiles = originFiles.map(file => {
+      return processFiles(file);
+    });
+
+    Promise.all(postFiles).then(fileList => {
+      fileList.forEach(file => {
+        postFile(file);
+      });
+    });
+  };
+
+  const processFiles = async (file: File): Promise<UploadFile> => {
+    const initFile: UploadFile = {
+      uid: uuidv4(),
+      originFile: file,
+      name: file.name,
+      size: file.size,
+    };
+
+    let result = initFile;
+
+    if (beforeUpload) {
+      result = await beforeUpload(initFile);
+    }
+
+    return result;
+  };
+
+  const postFile = (file: UploadFile) => {
+    const requestOption: RequestOption = {
+      action: `${globalConfig.serverHost}${action}`,
+      method: 'POST',
+      fileName: fileName || 'file',
+      onError,
+      onProgress,
+      onSuccess,
+      file: file.originFile,
+    };
+
+    uploadRequest(requestOption);
   };
 
   useImperativeHandle(ref, () => {
     return {
-      upload: onFileUpload,
+      fileInputRef,
     };
   });
 
   return (
-    <div>
+    <div onClick={onClick} role="button" style={{ display: 'inline-block', ...style }} className={className}>
       <input
-        style={{ visibility: 'hidden', position: 'absolute', height: 0 }}
+        style={{ display: 'none' }}
         ref={fileInputRef}
         type="file"
-        onChange={onFileChange}
         multiple={multiple}
-        accept={accept ? accept.join(',') : undefined}
+        accept={accept}
+        onClick={e => e.stopPropagation()}
+        onChange={onChange}
       />
-      <div onClick={onSelectFile}>{children ? children : <button>点击上传</button>}</div>
+      {children}
     </div>
   );
 });
