@@ -1,138 +1,100 @@
-import { CustomFile, Upload } from '@/components/Upload';
-import React, { FC, useState } from 'react';
-import {
-  Alert,
-  AlertIcon,
-  Box,
-  Button,
-  CloseButton,
-  Flex,
-  IconButton,
-  List,
-  ListIcon,
-  ListItem,
-  Progress,
-  Spacer,
-  Tag,
-  Text,
-  Tooltip,
-} from '@chakra-ui/react';
-import { CheckCircleIcon, CloseIcon, DownloadIcon } from '@chakra-ui/icons';
-import { useAutoAnimate } from '@formkit/auto-animate/react';
-import { TextScroll, TextWithTooltip } from '@/components/TextComponents';
-import globalConfig from '@/constants/config';
+import { Upload, UploadFile } from '@/components/Upload';
+import React, { FC, useEffect, useState } from 'react';
+import { Alert, AlertIcon, Image, Button, Center, Progress, Tag, Box } from '@chakra-ui/react';
+import pdfSvg from '@/assets/pdf2.svg';
+import { pdfToImg } from '@/services';
 import { clickDownload } from '@/utils/file';
 
 const PdfToImg: FC = () => {
-  const [fileList, setFileList] = useState<CustomFile[]>([]);
-  const [parent] = useAutoAnimate(/* optional config */);
+  const [originFile, setOriginFile] = useState<UploadFile<any>>();
+  const [progress, setProgress] = useState(0);
+  const [fileId, setFileId] = useState('');
+  const [status, setStatus] = useState('');
+  const [download, setDownload] = useState('');
 
-  const deleteItemFile = (fileItem: CustomFile) => {
-    const { id } = fileItem;
-    const newFileList = fileList.filter(item => item.id !== id);
-    setFileList(newFileList);
-  };
-  const downloadZip = (fileItem: CustomFile) => {
-    const res = fileItem.res?.data;
-    if (res) {
-      clickDownload(res.url, res.name);
+  const onSuccess = (body: any) => {
+    if (body.code === 0) {
+      setStatus('successful');
+      const fileId = body.data?.id;
+      setFileId(fileId);
     }
   };
 
-  const getStatus = (fileItem: CustomFile) => {
-    if (fileItem.progress < 100) {
-      return {
-        text: '上传中',
-        color: 'blue',
-      };
-    } else {
-      if (fileItem.res) {
-        const { code } = fileItem.res || {};
-        if (code == 0) {
-          return {
-            text: '成功',
-            color: 'green',
-          };
-        } else {
-          return {
-            text: '失败',
-            color: 'red',
-          };
+  const getTagStatus = () => {
+    switch (status) {
+      case 'uploading':
+        return '上传中';
+      case 'successful':
+        return '上传成功';
+      case 'conversion':
+        return '转化中';
+      case 'done':
+        return '已完成';
+      default:
+        return '上传中';
+    }
+  };
+
+  useEffect(() => {
+    // 上传完成，开始转化
+    if (fileId) {
+      setStatus('conversion');
+      pdfToImg(fileId).then(res => {
+        if (res.data?.code === 0) {
+          setDownload(res.data?.data?.fileId);
+          setStatus('done');
         }
-      } else {
-        return {
-          text: '转化中',
-          color: 'teal',
-        };
-      }
+      });
     }
-  };
+  }, [fileId]);
 
   return (
-    <div>
+    <Center flexDir={'column'}>
       <Alert status="warning" marginBottom={'16px'}>
         <AlertIcon />
         转化时间较长，请耐心等待！
       </Alert>
-      <Upload>
-        <Button colorScheme="teal">点击选择pdf文件</Button>
-      </Upload>
-      <List border={'var(--border-main)'} padding={'16px'} marginTop={'16px'} ref={parent}>
-        {fileList.map(item => {
-          const tagConfig = getStatus(item);
-          return (
-            <ListItem
-              _hover={{
-                bgColor: 'var(--main-bg-grey)',
-              }}
-              transition={'var(--transition-bg)'}
-              key={item.id}
-              padding={'10px'}
-              borderRadius={'4px'}
-            >
-              <Flex alignItems={'center'}>
-                <Box flex={4}>
-                  <Flex alignItems={'center'} marginBottom={'6px'}>
-                    {/* <ListIcon as={CheckCircleIcon} color="green.500" /> */}
-                    <Text>{item.file?.name}</Text>
-                    {/* <TextScroll text={item.file?.name} /> */}
-                  </Flex>
-                  <Flex alignItems={'center'}>
-                    <Tag variant="solid" size={'sm'} flexShrink={0} marginRight={'6px'} colorScheme={tagConfig.color}>
-                      {tagConfig.text}
-                    </Tag>
-                    <Progress minWidth={'100px'} flex={1} colorScheme="green" size="md" value={item.progress} />
-                  </Flex>
-                </Box>
+      {originFile && (
+        <>
+          <Image src={pdfSvg} alt="Dan Abramov" />
+          <Box display={'flex'} gap={'10px'}>
+            <Tag>{getTagStatus()}</Tag>
+            <div>{originFile?.name}</div>
+          </Box>
+        </>
+      )}
 
-                <Spacer />
-                <Flex>
-                  {item.res && (
-                    <IconButton
-                      size={'sm'}
-                      onClick={() => downloadZip(item)}
-                      variant="outline"
-                      colorScheme="teal"
-                      aria-label="none"
-                      icon={<DownloadIcon />}
-                      marginRight={'10px'}
-                    />
-                  )}
-                  <IconButton
-                    onClick={() => deleteItemFile(item)}
-                    size={'sm'}
-                    variant="outline"
-                    colorScheme="teal"
-                    aria-label="none"
-                    icon={<CloseIcon />}
-                  />
-                </Flex>
-              </Flex>
-            </ListItem>
-          );
-        })}
-      </List>
-    </div>
+      <Progress value={progress} />
+
+      <Upload
+        accept=".pdf"
+        beforeUpload={file => {
+          setOriginFile(file);
+          setProgress(0);
+          setFileId('');
+          setDownload('');
+          setStatus('uploading');
+          return file;
+        }}
+        onProgress={e => {
+          setProgress(e.percent as number);
+        }}
+        onSuccess={onSuccess}
+      >
+        <Button colorScheme="teal">选择pdf文件上传</Button>
+      </Upload>
+      {download && (
+        <Button
+          colorScheme="teal"
+          mt="10px"
+          onClick={() => {
+            clickDownload(`/api/file/get/${download}`);
+          }}
+        >
+          点击下载图片压缩包
+        </Button>
+      )}
+    </Center>
   );
 };
 export default PdfToImg;

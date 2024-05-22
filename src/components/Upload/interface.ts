@@ -1,7 +1,6 @@
 import { CSSProperties, ReactNode } from 'react';
 
 // 组件相关
-// export type UploadFileStatus = 'error' | 'done' | 'uploading' | 'removed';
 
 export interface UploadFile<T = any> {
   uid: string;
@@ -9,7 +8,6 @@ export interface UploadFile<T = any> {
   name: string;
   size?: number;
   response?: T;
-  // status?: UploadFileStatus;
   [s: string]: any;
 }
 
