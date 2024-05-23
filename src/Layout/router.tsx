@@ -4,6 +4,7 @@ import Layout from './Layout';
 import Page404 from '@/components/ErrorPage/404';
 import PdfToImg from '@/apps/pdf/pdf-img';
 import UnlockPdf from '@/apps/pdf/pdf-unlock';
+import RandowSetu from '@/apps/picture/randow-setu';
 
 const router = createBrowserRouter([
   {
@@ -18,6 +19,10 @@ const router = createBrowserRouter([
       {
         path: 'pdf-unlock',
         element: <UnlockPdf />,
+      },
+      {
+        path: 'randow-setu',
+        element: <RandowSetu />,
       },
     ],
     ErrorBoundary: Page404,
