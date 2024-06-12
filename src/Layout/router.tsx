@@ -5,6 +5,7 @@ import Page404 from '@/components/ErrorPage/404';
 import PdfToImg from '@/apps/pdf/pdf-img';
 import UnlockPdf from '@/apps/pdf/pdf-unlock';
 import RandowSetu from '@/apps/picture/randow-setu';
+import LoginToken115 from '@/apps/other/login-115';
 
 const router = createBrowserRouter([
   {
@@ -23,6 +24,10 @@ const router = createBrowserRouter([
       {
         path: 'randow-setu',
         element: <RandowSetu />,
+      },
+      {
+        path: 'token-115',
+        element: <LoginToken115 />,
       },
     ],
     ErrorBoundary: Page404,
