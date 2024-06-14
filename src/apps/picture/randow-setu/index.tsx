@@ -2,14 +2,14 @@ import globalConfig from '@/constants/config';
 import { Box, Button, Center, Image } from '@chakra-ui/react';
 import { FC, useState } from 'react';
 
-const setu = `${globalConfig.serverHost}/api/util/setu`;
+const setu = `${globalConfig.serverHost}/api/util/setu?mode=direct`;
 
 let index = 0;
 const RandowSetu: FC = () => {
   const [imgSrc, setImgSrc] = useState(setu);
 
   const reload = () => {
-    setImgSrc(`${setu}?key=${index++}`);
+    setImgSrc(`${setu}&key=${index++}`);
   };
 
   return (
